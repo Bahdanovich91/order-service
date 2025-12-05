@@ -1,0 +1,27 @@
+parameters:
+    kafka.broker: '%env(KAFKA_BROKER)%'
+    kafka.topic.order_events: '%env(KAFKA_TOPIC_ORDER_EVENTS)%'
+    kafka.topic.inventory_commands: '%env(KAFKA_TOPIC_INVENTORY_COMMANDS)%'
+    kafka.topic.balance_commands: '%env(KAFKA_TOPIC_BALANCE_COMMANDS)%'
+
+services:
+    _defaults:
+        autowire: true
+        autoconfigure: true
+
+    App\:
+        resource: '../src/'
+        exclude:
+            - '../src/DependencyInjection/'
+            - '../src/Entity/'
+            - '../src/Kernel.php'
+
+    App\Service\KafkaService:
+        arguments:
+            $kafkaBroker: '%kafka.broker%'
+
+    App\Service\OrderService:
+        arguments:
+            $orderEventsTopic: '%kafka.topic.order_events%'
+            $inventoryCommandsTopic: '%kafka.topic.inventory_commands%'
+            $balanceCommandsTopic: '%kafka.topic.balance_commands%'
