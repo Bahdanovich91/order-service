@@ -9,17 +9,19 @@ use App\Entity\Order;
 use App\Exception\InsufficientBalanceException;
 use App\Exception\InsufficientInventoryException;
 use App\Repository\OrderRepository;
+use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
 
 readonly class OrderService
 {
     public function __construct(
-        private OrderRepository $orderRepository,
-        private KafkaService    $kafkaService,
-        private LoggerInterface $logger,
-        private string          $orderEventsTopic,
-        private string          $inventoryCommandsTopic,
-        private string          $balanceCommandsTopic
+        private EntityManagerInterface $entityManager,
+        private OrderRepository        $orderRepository,
+        private KafkaService           $kafkaService,
+        private LoggerInterface        $logger,
+        private string                 $orderEventsTopic,
+        private string                 $inventoryCommandsTopic,
+        private string                 $balanceCommandsTopic
     ) {
     }
 
@@ -33,7 +35,8 @@ readonly class OrderService
         $order->setTotalAmount((string) $totalAmount);
         $order->setItems($dto->items);
 
-        $this->orderRepository->save($order, true);
+        $this->entityManager->persist($order);
+        $this->entityManager->flush();
 
         $this->kafkaService->sendEvent($this->orderEventsTopic, [
             'type' => 'order_created',
@@ -62,7 +65,6 @@ readonly class OrderService
             ], $correlationId);
         }
 
-        // Отправляем команду для проверки баланса через Kafka
         $this->kafkaService->sendCommand($this->balanceCommandsTopic, [
             'command' => 'check_balance',
             'order_id' => $order->getId(),
@@ -90,17 +92,20 @@ readonly class OrderService
 
         if (!$inventoryAvailable) {
             $order->setStatus('failed');
-            $this->orderRepository->save($order, true);
+            $this->entityManager->persist($order);
+            $this->entityManager->flush();
+
             throw new InsufficientInventoryException('Недостаточно товара на складе');
         }
 
         if (!$balanceSufficient) {
             $order->setStatus('failed');
-            $this->orderRepository->save($order, true);
+            $this->entityManager->persist($order);
+            $this->entityManager->flush();
+
             throw new InsufficientBalanceException('Недостаточно средств на балансе');
         }
 
-        // Если всё ок, резервируем товары и списываем средства
         $this->reserveInventoryAndWithdraw($order);
     }
 
@@ -128,7 +133,8 @@ readonly class OrderService
         ], $correlationId);
 
         $order->setStatus('processing');
-        $this->orderRepository->save($order, true);
+        $this->entityManager->persist($order);
+        $this->entityManager->flush();
     }
 
     public function completeOrder(int $orderId): void
@@ -140,7 +146,8 @@ readonly class OrderService
         }
 
         $order->setStatus('completed');
-        $this->orderRepository->save($order, true);
+        $this->entityManager->persist($order);
+        $this->entityManager->flush();
 
         $this->kafkaService->sendEvent($this->orderEventsTopic, [
             'type' => 'order_completed',
