@@ -11,24 +11,22 @@ use App\Exception\InsufficientInventoryException;
 use App\Repository\OrderRepository;
 use Psr\Log\LoggerInterface;
 
-class OrderService
+readonly class OrderService
 {
     public function __construct(
-        private readonly OrderRepository $orderRepository,
-        private readonly KafkaService $kafkaService,
-        private readonly LoggerInterface $logger,
-        private readonly string $orderEventsTopic,
-        private readonly string $inventoryCommandsTopic,
-        private readonly string $balanceCommandsTopic
+        private OrderRepository $orderRepository,
+        private KafkaService    $kafkaService,
+        private LoggerInterface $logger,
+        private string          $orderEventsTopic,
+        private string          $inventoryCommandsTopic,
+        private string          $balanceCommandsTopic
     ) {
     }
 
     public function createOrder(CreateOrderDto $dto): Order
     {
-        // Рассчитываем общую сумму (упрощенно, в реальности нужно получать цены из каталога)
         $totalAmount = $this->calculateTotalAmount($dto->items);
 
-        // Создаём заказ
         $order = new Order();
         $order->setUserId($dto->userId);
         $order->setStatus('pending');
@@ -37,7 +35,6 @@ class OrderService
 
         $this->orderRepository->save($order, true);
 
-        // Отправляем событие о создании заказа
         $this->kafkaService->sendEvent($this->orderEventsTopic, [
             'type' => 'order_created',
             'order_id' => $order->getId(),
@@ -52,9 +49,8 @@ class OrderService
             'user_id' => $order->getUserId(),
         ]);
 
-        // Отправляем команды для проверки наличия товаров через Kafka
         $correlationId = 'order_' . $order->getId() . '_' . time();
-        
+
         foreach ($dto->items as $item) {
             $this->kafkaService->sendCommand($this->inventoryCommandsTopic, [
                 'command' => 'check_availability',
@@ -75,14 +71,10 @@ class OrderService
             'correlation_id' => $correlationId,
         ], $correlationId);
 
-        // Для упрощения: сразу отправляем команды выполнения после проверки
-        // В реальной системе это должно быть после получения подтверждений
-        // Но для демонстрации отправляем сразу
         $this->logger->info('Sending execution commands after validation', [
             'order_id' => $order->getId(),
         ]);
 
-        // Отправляем команды для резервирования товаров и списания средств
         $this->reserveInventoryAndWithdraw($order);
 
         return $order;
@@ -116,7 +108,6 @@ class OrderService
     {
         $correlationId = 'order_' . $order->getId() . '_reserve_' . time();
 
-        // Отправляем команды для резервирования товаров
         foreach ($order->getItems() as $item) {
             $this->kafkaService->sendCommand($this->inventoryCommandsTopic, [
                 'command' => 'reserve',
@@ -128,7 +119,6 @@ class OrderService
             ], $correlationId);
         }
 
-        // Отправляем команду для списания средств
         $this->kafkaService->sendCommand($this->balanceCommandsTopic, [
             'command' => 'withdraw',
             'order_id' => $order->getId(),
@@ -137,7 +127,6 @@ class OrderService
             'correlation_id' => $correlationId,
         ], $correlationId);
 
-        // Обновляем статус заказа
         $order->setStatus('processing');
         $this->orderRepository->save($order, true);
     }
@@ -153,7 +142,6 @@ class OrderService
         $order->setStatus('completed');
         $this->orderRepository->save($order, true);
 
-        // Отправляем событие о завершении заказа
         $this->kafkaService->sendEvent($this->orderEventsTopic, [
             'type' => 'order_completed',
             'order_id' => $order->getId(),
@@ -172,10 +160,8 @@ class OrderService
      */
     private function calculateTotalAmount(array $items): float
     {
-        // Упрощённый расчёт. В реальности нужно получать цены из каталога товаров
         $total = 0.0;
         foreach ($items as $item) {
-            // Временная цена: 100 за единицу товара
             $total += $item['quantity'] * 100.0;
         }
 
