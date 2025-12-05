@@ -6,6 +6,7 @@ namespace App\Service;
 
 use App\DTO\CreateOrderDto;
 use App\Entity\Order;
+use App\Enum\OrderStatus;
 use App\Exception\InsufficientBalanceException;
 use App\Exception\InsufficientInventoryException;
 use App\Repository\OrderRepository;
@@ -31,7 +32,7 @@ readonly class OrderService
 
         $order = new Order();
         $order->setUserId($dto->userId);
-        $order->setStatus('pending');
+        $order->setStatus(OrderStatus::Pending->value);
         $order->setTotalAmount((string) $totalAmount);
         $order->setItems($dto->items);
 
@@ -99,7 +100,7 @@ readonly class OrderService
         }
 
         if (!$balanceSufficient) {
-            $order->setStatus('failed');
+            $order->setStatus(OrderStatus::Failed->value);
             $this->entityManager->persist($order);
             $this->entityManager->flush();
 
@@ -132,7 +133,7 @@ readonly class OrderService
             'correlation_id' => $correlationId,
         ], $correlationId);
 
-        $order->setStatus('processing');
+        $order->setStatus(OrderStatus::InProcess->value);
         $this->entityManager->persist($order);
         $this->entityManager->flush();
     }
@@ -145,7 +146,7 @@ readonly class OrderService
             return;
         }
 
-        $order->setStatus('completed');
+        $order->setStatus(OrderStatus::Completed->value);
         $this->entityManager->persist($order);
         $this->entityManager->flush();
 
