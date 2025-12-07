@@ -20,8 +20,12 @@ services:
         arguments:
             $kafkaBroker: '%kafka.broker%'
 
-    App\Service\OrderService:
-        arguments:
+    App\Handler\Order\:
+        resource: '../src/Handler/Order/*'
+        tags: [ 'app.orderHandlers' ]
+        autowire: true
+        autoconfigure: true
+        bind:
             $orderEventsTopic: '%kafka.topic.order_events%'
             $inventoryCommandsTopic: '%kafka.topic.inventory_commands%'
             $balanceCommandsTopic: '%kafka.topic.balance_commands%'
