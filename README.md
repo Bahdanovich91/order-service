@@ -1,6 +1,7 @@
 # 🛒 Order Service
 
 Сервис для управления заказами на **Symfony 7** с интеграцией через Kafka.
+Для работы необходимы: balance-service, infrastructure-service, inventory-service
 
 ## 🎯 Что делает сервис
 
@@ -25,33 +26,6 @@
 - Установит зависимости
 - Настроит базу данных PostgreSQL
 - Настроит подключение к Kafka и Elasticsearch
-
-### Ручная установка
-
-```bash
-# 1. Запуск контейнеров
-docker compose up -d
-
-# 2. Установка Symfony (выполнится автоматически при первом запуске)
-# Или вручную:
-docker compose exec app /usr/local/bin/install_symfony.sh
-
-# 3. Установка зависимостей
-docker compose exec app composer require \
-    doctrine/doctrine-bundle \
-    doctrine/doctrine-migrations-bundle \
-    doctrine/orm \
-    symfony/validator \
-    enqueue/rdkafka \
-    --no-interaction
-
-# 4. Настройка .env.local
-docker compose exec app cp .env .env.local
-
-# 5. Создание базы данных
-docker compose exec app php bin/console doctrine:database:create --if-not-exists
-docker compose exec app php bin/console doctrine:schema:update --force
-```
 
 ## 📋 API Endpoints
 
@@ -115,10 +89,6 @@ docker compose exec app php bin/console doctrine:schema:update --force
 5. **Резервирование** → команды в `inventory-commands` и `balance-commands`
 6. **Завершение** → статус `completed`, событие в `order-events`
 
-## 📖 Примеры использования
-
-См. подробные примеры в `/examples/POSTMAN_GUIDE.md`
-
 ## 🔗 Интеграция через Kafka
 
 Сервис интегрирован с другими сервисами через Kafka:
@@ -126,18 +96,3 @@ docker compose exec app php bin/console doctrine:schema:update --force
 - **inventory-commands** - отправка команд для проверки и резервирования товаров
 - **balance-commands** - отправка команд для проверки баланса и списания средств
 - **order-events** - отправка событий о создании и завершении заказов
-
-## 📝 Структура проекта
-
-```
-order-service/
-├── config/          # Конфигурация Symfony
-├── src/
-│   ├── Controller/  # Контроллеры
-│   ├── Entity/      # Doctrine сущности
-│   ├── Service/     # Бизнес-логика
-│   ├── DTO/         # Data Transfer Objects
-│   └── Exception/   # Исключения
-├── public/          # Публичная директория
-└── docker/          # Docker конфигурация
-```
