@@ -12,7 +12,8 @@ final class CreateOrderDtoFactory
 {
     public function __construct(
         private readonly OrderRequestValidator $validator
-    ) {}
+    ) {
+    }
 
     public function fromRequest(Request $request): CreateOrderDto
     {

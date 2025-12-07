@@ -39,7 +39,7 @@ class Order
     public function __construct()
     {
         $this->createdAt = new \DateTimeImmutable();
-        $this->status = 'pending';
+        $this->status    = 'pending';
     }
 
     #[ORM\PreUpdate]

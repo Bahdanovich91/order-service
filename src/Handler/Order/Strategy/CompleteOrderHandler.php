@@ -45,9 +45,9 @@ final readonly class CompleteOrderHandler implements OrderHandlerInterface
         $this->entityManager->flush();
 
         $this->kafkaService->sendEvent($this->orderEventsTopic, [
-            'type' => 'order_completed',
-            'order_id' => $order->getId(),
-            'user_id' => $order->getUserId(),
+            'type'      => 'order_completed',
+            'order_id'  => $order->getId(),
+            'user_id'   => $order->getUserId(),
             'timestamp' => $order->getUpdatedAt()?->format('c') ?? $order->getCreatedAt()->format('c'),
         ]);
     }

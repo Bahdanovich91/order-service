@@ -29,6 +29,49 @@ final readonly class CreateOrderHandler implements OrderHandlerInterface
         return OrderAction::Create->value === $action->value;
     }
 
+    private function calculateTotalAmount(array $items): float
+    {
+        $total = 0.0;
+        foreach ($items as $item) {
+            $total += $item['quantity'] * 100.0;
+        }
+
+        return $total;
+    }
+
+    private function sendKafkaEvents(Order $order, array $items): void
+    {
+        $correlationId = 'order_' . $order->getId() . '_' . time();
+
+        $this->kafkaService->sendEvent($this->orderEventsTopic, [
+            'type'         => 'order_created',
+            'order_id'     => $order->getId(),
+            'user_id'      => $order->getUserId(),
+            'total_amount' => $order->getTotalAmount(),
+            'items'        => $items,
+            'timestamp'    => $order->getCreatedAt()->format('c'),
+        ]);
+
+        foreach ($items as $item) {
+            $this->kafkaService->sendCommand($this->inventoryCommandsTopic, [
+                'command'        => 'check_availability',
+                'order_id'       => $order->getId(),
+                'product_id'     => $item['product_id'],
+                'warehouse_id'   => $item['warehouse_id'],
+                'quantity'       => $item['quantity'],
+                'correlation_id' => $correlationId,
+            ], $correlationId);
+        }
+
+        $this->kafkaService->sendCommand($this->balanceCommandsTopic, [
+            'command'        => 'check_balance',
+            'order_id'       => $order->getId(),
+            'user_id'        => $order->getUserId(),
+            'amount'         => $order->getTotalAmount(),
+            'correlation_id' => $correlationId,
+        ], $correlationId);
+    }
+
     public static function getDefaultPriority(): int
     {
         return OrderAction::Create->priority();
@@ -50,47 +93,5 @@ final readonly class CreateOrderHandler implements OrderHandlerInterface
         $this->sendKafkaEvents($order, $dto->items);
 
         return $order;
-    }
-
-    private function calculateTotalAmount(array $items): float
-    {
-        $total = 0.0;
-        foreach ($items as $item) {
-            $total += $item['quantity'] * 100.0;
-        }
-        return $total;
-    }
-
-    private function sendKafkaEvents(Order $order, array $items): void
-    {
-        $correlationId = 'order_' . $order->getId() . '_' . time();
-
-        $this->kafkaService->sendEvent($this->orderEventsTopic, [
-            'type' => 'order_created',
-            'order_id' => $order->getId(),
-            'user_id' => $order->getUserId(),
-            'total_amount' => $order->getTotalAmount(),
-            'items' => $items,
-            'timestamp' => $order->getCreatedAt()->format('c'),
-        ]);
-
-        foreach ($items as $item) {
-            $this->kafkaService->sendCommand($this->inventoryCommandsTopic, [
-                'command' => 'check_availability',
-                'order_id' => $order->getId(),
-                'product_id' => $item['product_id'],
-                'warehouse_id' => $item['warehouse_id'],
-                'quantity' => $item['quantity'],
-                'correlation_id' => $correlationId,
-            ], $correlationId);
-        }
-
-        $this->kafkaService->sendCommand($this->balanceCommandsTopic, [
-            'command' => 'check_balance',
-            'order_id' => $order->getId(),
-            'user_id' => $order->getUserId(),
-            'amount' => $order->getTotalAmount(),
-            'correlation_id' => $correlationId,
-        ], $correlationId);
     }
 }
