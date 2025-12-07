@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Handler\Order\Strategy;
 
-use App\DTO\CreateOrderDto;
+use App\Dto\CreateOrderDto;
 use App\Entity\Order;
 use App\Enum\OrderAction;
 use App\Enum\OrderStatus;

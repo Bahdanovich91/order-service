@@ -66,7 +66,7 @@ final class OrderResponse
             'user_id'      => $data->getUserId(),
             'status'       => $data->getStatus(),
             'total_amount' => $data->getTotalAmount(),
-            'created_at'   => $data->getCreatedAt()?->format(DATE_ATOM),
+            'created_at'   => $data->getCreatedAt()->format(DATE_ATOM),
         ];
     }
 }
