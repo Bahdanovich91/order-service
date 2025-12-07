@@ -10,7 +10,7 @@ use App\Repository\OrderRepository;
 use Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag;
 
 #[AutoconfigureTag('app.orderHandlers')]
-final class GetAllOrdersHandler implements OrderHandlerInterface
+final readonly class GetAllOrdersHandler implements OrderHandlerInterface
 {
     public function __construct(
         private OrderRepository $orderRepository

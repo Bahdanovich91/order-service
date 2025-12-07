@@ -13,14 +13,14 @@ use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag;
 
 #[AutoconfigureTag('app.orderHandlers')]
-final class CreateOrderHandler implements OrderHandlerInterface
+final readonly class CreateOrderHandler implements OrderHandlerInterface
 {
     public function __construct(
         private EntityManagerInterface $entityManager,
-        private KafkaService $kafkaService,
-        private string $orderEventsTopic,
-        private string $inventoryCommandsTopic,
-        private string $balanceCommandsTopic,
+        private KafkaService           $kafkaService,
+        private string                 $orderEventsTopic,
+        private string                 $inventoryCommandsTopic,
+        private string                 $balanceCommandsTopic,
     ) {
     }
 
