@@ -19,7 +19,20 @@ class OrderController extends AbstractController
     public function __construct(
         private readonly OrderService $orderService,
         private readonly CreateOrderDtoFactory $dtoFactory,
-    ) {}
+    ) {
+    }
+
+    #[Route('', name: 'list', methods: ['GET'])]
+    public function list(): JsonResponse
+    {
+        try {
+            $orders = $this->orderService->getAll();
+        } catch (\Throwable $error) {
+            return OrderResponse::error($error);
+        }
+
+        return OrderResponse::collection($orders);
+    }
 
     #[Route('', name: 'create', methods: ['POST'])]
     public function create(Request $request): JsonResponse
@@ -27,11 +40,10 @@ class OrderController extends AbstractController
         try {
             $dto   = $this->dtoFactory->fromRequest($request);
             $order = $this->orderService->createOrder($dto);
-
-            return OrderResponse::item($order, Response::HTTP_CREATED);
-
         } catch (\Throwable $error) {
             return OrderResponse::error($error);
         }
+
+        return OrderResponse::item($order, Response::HTTP_CREATED);
     }
 }

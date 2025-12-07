@@ -54,4 +54,20 @@ final class OrderResponse
             ], Response::HTTP_INTERNAL_SERVER_ERROR),
         };
     }
+
+    public static function collection(array $orders, int $status = Response::HTTP_OK): JsonResponse
+    {
+        return new JsonResponse([
+            'data' => array_map(fn(Order $order) => [
+                'id'           => $order->getId(),
+                'user_id'      => $order->getUserId(),
+                'status'       => $order->getStatus(),
+                'total_amount' => $order->getTotalAmount(),
+                'items'        => $order->getItems(),
+                'created_at'   => $order->getCreatedAt()->format('c'),
+                'updated_at'   => $order->getUpdatedAt()?->format('c'),
+            ], $orders)
+        ], $status);
+    }
+
 }

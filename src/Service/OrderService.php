@@ -26,6 +26,12 @@ readonly class OrderService
     ) {
     }
 
+    public function getAll(): array
+    {
+        return $this->orderRepository->findAll();
+    }
+
+
     public function createOrder(CreateOrderDto $dto): Order
     {
         $totalAmount = $this->calculateTotalAmount($dto->items);
