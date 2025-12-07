@@ -4,15 +4,16 @@ declare(strict_types=1);
 
 namespace App\Validator;
 
-use Symfony\Component\Validator\Validator\ValidatorInterface;
-use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
+use Symfony\Component\Validator\Constraints as Assert;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 final readonly class OrderRequestValidator
 {
     public function __construct(
         private ValidatorInterface $validator
-    ) {}
+    ) {
+    }
 
     public function validate(array $data): void
     {

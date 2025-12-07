@@ -1,0 +1,7 @@
+parameters:
+    level: 5
+    paths:
+        - src
+    tmpDir: var/cache/phpstan
+    ignoreErrors:
+        - '#Property [a-zA-Z0-9\\_]+::\$[a-zA-Z0-9\\_]+ is never written, only read#'

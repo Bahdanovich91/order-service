@@ -16,7 +16,7 @@ class Order
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: Types::INTEGER)]
-    private ?int $id = null;
+    private int $id;
 
     #[ORM\Column(type: Types::INTEGER)]
     private int $userId;
@@ -31,16 +31,10 @@ class Order
     private array $items = [];
 
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
-    private \DateTimeImmutable $createdAt;
+    private ?\DateTimeImmutable $createdAt = null;
 
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true)]
     private ?\DateTimeImmutable $updatedAt = null;
-
-    public function __construct()
-    {
-        $this->createdAt = new \DateTimeImmutable();
-        $this->status = 'pending';
-    }
 
     #[ORM\PreUpdate]
     public function setUpdatedAtValue(): void
@@ -112,8 +106,24 @@ class Order
         return $this->createdAt;
     }
 
+    #[ORM\PrePersist]
+    public function setCreatedAt(): self
+    {
+        $this->createdAt ??= new \DateTimeImmutable();
+
+        return $this;
+    }
+
     public function getUpdatedAt(): ?\DateTimeImmutable
     {
         return $this->updatedAt;
+    }
+
+    #[ORM\PreUpdate]
+    public function setUpdatedAt(): self
+    {
+        $this->updatedAt = new \DateTimeImmutable();
+
+        return $this;
     }
 }

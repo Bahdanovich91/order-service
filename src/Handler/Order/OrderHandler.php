@@ -6,14 +6,14 @@ namespace App\Handler\Order;
 
 use App\Dto\CreateOrderDto;
 use App\Enum\OrderAction;
-use Symfony\Component\DependencyInjection\Attribute\TaggedIterator;
+use Symfony\Component\DependencyInjection\Attribute\AutowireIterator;
 
 final class OrderHandler
 {
     private iterable $handlers;
 
     public function __construct(
-        #[TaggedIterator('app.orderHandlers')]
+        #[AutowireIterator('app.orderHandlers')]
         iterable $handlers,
     ) {
         $this->handlers = $handlers;

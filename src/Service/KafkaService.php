@@ -6,14 +6,13 @@ namespace App\Service;
 
 use Enqueue\RdKafka\RdKafkaConnectionFactory;
 use Interop\Queue\Context;
-use Interop\Queue\Message;
 use Interop\Queue\Producer;
-use Interop\Queue\Topic;
 use Psr\Log\LoggerInterface;
 
 class KafkaService
 {
     private Context $context;
+
     private Producer $producer;
 
     public function __construct(
@@ -22,13 +21,13 @@ class KafkaService
     ) {
         $factory = new RdKafkaConnectionFactory([
             'global' => [
-                'group.id' => 'order-service',
+                'group.id'             => 'order-service',
                 'metadata.broker.list' => $kafkaBroker,
-                'enable.auto.commit' => 'true',
+                'enable.auto.commit'   => 'true',
             ],
         ]);
 
-        $this->context = $factory->createContext();
+        $this->context  = $factory->createContext();
         $this->producer = $this->context->createProducer();
     }
 
@@ -36,7 +35,7 @@ class KafkaService
     {
         try {
             $kafkaTopic = $this->context->createTopic($topic);
-            $message = $this->context->createMessage(
+            $message    = $this->context->createMessage(
                 json_encode($data, JSON_THROW_ON_ERROR)
             );
 
@@ -47,15 +46,16 @@ class KafkaService
             $this->producer->send($kafkaTopic, $message);
 
             $this->logger->info('Kafka command sent', [
-                'topic' => $topic,
+                'topic'          => $topic,
                 'correlation_id' => $correlationId,
-                'data' => $data,
+                'data'           => $data,
             ]);
         } catch (\Throwable $e) {
             $this->logger->error('Failed to send Kafka command', [
                 'topic' => $topic,
                 'error' => $e->getMessage(),
             ]);
+
             throw $e;
         }
     }
@@ -64,7 +64,7 @@ class KafkaService
     {
         try {
             $kafkaTopic = $this->context->createTopic($topic);
-            $message = $this->context->createMessage(
+            $message    = $this->context->createMessage(
                 json_encode($data, JSON_THROW_ON_ERROR)
             );
 
@@ -72,16 +72,15 @@ class KafkaService
 
             $this->logger->info('Kafka event sent', [
                 'topic' => $topic,
-                'data' => $data,
+                'data'  => $data,
             ]);
         } catch (\Throwable $e) {
             $this->logger->error('Failed to send Kafka event', [
                 'topic' => $topic,
                 'error' => $e->getMessage(),
             ]);
+
             throw $e;
         }
     }
 }
-
-

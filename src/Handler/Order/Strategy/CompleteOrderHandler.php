@@ -11,14 +11,14 @@ use App\Service\KafkaService;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
 
-final class CompleteOrderHandler implements OrderHandlerInterface
+final readonly class CompleteOrderHandler implements OrderHandlerInterface
 {
     public function __construct(
         private EntityManagerInterface $entityManager,
-        private OrderRepository $orderRepository,
-        private KafkaService $kafkaService,
-        private LoggerInterface $logger,
-        private string $orderEventsTopic,
+        private OrderRepository        $orderRepository,
+        private KafkaService           $kafkaService,
+        private LoggerInterface        $logger,
+        private string                 $orderEventsTopic,
     ) {
     }
 
@@ -37,6 +37,7 @@ final class CompleteOrderHandler implements OrderHandlerInterface
         $order = $this->orderRepository->find($orderId);
         if (!$order) {
             $this->logger->error('Order not found', ['order_id' => $orderId]);
+
             return;
         }
 
@@ -44,9 +45,9 @@ final class CompleteOrderHandler implements OrderHandlerInterface
         $this->entityManager->flush();
 
         $this->kafkaService->sendEvent($this->orderEventsTopic, [
-            'type' => 'order_completed',
-            'order_id' => $order->getId(),
-            'user_id' => $order->getUserId(),
+            'type'      => 'order_completed',
+            'order_id'  => $order->getId(),
+            'user_id'   => $order->getUserId(),
             'timestamp' => $order->getUpdatedAt()?->format('c') ?? $order->getCreatedAt()->format('c'),
         ]);
     }

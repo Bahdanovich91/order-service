@@ -1,0 +1,45 @@
+name: CI
+
+on:
+    pull_request:
+        types: [opened, synchronize, reopened]
+
+jobs:
+    php:
+        runs-on: ubuntu-latest
+
+        steps:
+            # 1. Checkout кода
+            - name: Checkout code
+              uses: actions/checkout@v4
+
+            # 2. Установка PHP
+            - name: Setup PHP
+              uses: shivammathur/setup-php@v2
+              with:
+                  php-version: 8.3
+                  extensions: mbstring, intl, pdo_pgsql, zip, rdkafka
+                  tools: composer:v2
+
+            # 3. Установка зависимостей
+            - name: Prepare .env
+              run: |
+                  cp .env.example .env
+                  echo "DATABASE_URL=mysql://app:!ChangeMe!@127.0.0.1:3306/app" >> .env
+                  echo "REDIS_URL=redis://127.0.0.1:6379" >> .env
+
+            # 3. Установка зависимостей
+            - name: Install dependencies
+              run: composer install --no-interaction --no-progress --prefer-dist
+
+            # 4. Проверка код-стайла (php-cs-fixer --dry-run)
+            - name: Run PHP-CS-Fixer
+              run: vendor/bin/php-cs-fixer fix --dry-run --diff
+
+            # 5. PHPStan
+            - name: Run PHPStan
+              run: vendor/bin/phpstan analyse --configuration=phpstan.neon
+
+            # 6. Проверка уязвимостей зависимостей
+            - name: Security check
+              run: composer audit

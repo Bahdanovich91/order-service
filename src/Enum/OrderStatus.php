@@ -8,6 +8,6 @@ enum OrderStatus: string
 {
     case InProcess = 'processing';
     case Pending   = 'pending';
-    case Failed   = 'failed';
-    case Completed   = 'completed';
+    case Failed    = 'failed';
+    case Completed = 'completed';
 }
