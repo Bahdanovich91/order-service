@@ -109,7 +109,7 @@ class Order
     #[ORM\PrePersist]
     public function setCreatedAt(): self
     {
-        $this->createdAt = $this->createdAt ?? new \DateTimeImmutable();
+        $this->createdAt ??= new \DateTimeImmutable();
 
         return $this;
     }
@@ -122,7 +122,7 @@ class Order
     #[ORM\PreUpdate]
     public function setUpdatedAt(): self
     {
-        $this->updatedAt =  new \DateTimeImmutable();
+        $this->updatedAt = new \DateTimeImmutable();
 
         return $this;
     }
